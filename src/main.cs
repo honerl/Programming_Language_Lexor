@@ -1,9 +1,13 @@
-import System;
+using System;
 
-class Lexor
+namespace Language
 {
-    static void Main() 
+    class Lexor 
     {
-        Console.WriteLine("Hello World")
+        static void Main(string[] args) 
+        {
+            Console.WriteLine("Hello World");
+        }
     }
+
 }
