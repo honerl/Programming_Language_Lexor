@@ -1,3 +1,5 @@
+using System;
+using LexorInterpreter.Shared;
 
 namespace LexerInterpreter.Lexer;
 public static class ReservedWords {

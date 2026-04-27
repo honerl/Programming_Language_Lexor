@@ -1,4 +1,5 @@
 using System.Text;
+using LexorInterpreter.Shared;
 
 namespace LexerInterpreter.Lexer;
 public partial class LexorLexer

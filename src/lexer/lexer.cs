@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
+using LexorInterpreter.Shared;
+
+
 namespace LexerInterpreter.Lexer;
 public partial class LexorLexer 
 {

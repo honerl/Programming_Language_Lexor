@@ -1,4 +1,6 @@
 using System.Text;
+using LexorInterpreter.Shared;
+
 namespace LexerInterpreter.Lexer;
 public partial class LexorLexer
 {
@@ -90,7 +92,7 @@ public partial class LexorLexer
             string word     = sb.ToString();
             string combined = word + " " + PeekRestOfLine().TrimStart();
 
-            // Multi-word keywords — longer matches must come first
+            // Multi-word keywords longer matches must come first
             if      (word == "SCRIPT" && combined.StartsWith("SCRIPT AREA"))   { SkipWhitespace(); ConsumeWord("AREA");   AddToken(TokenType.SCRIPT_AREA,  "SCRIPT AREA",  tokenLine, tokenCol); }
             else if (word == "START"  && combined.StartsWith("START SCRIPT"))  { SkipWhitespace(); ConsumeWord("SCRIPT"); AddToken(TokenType.START_SCRIPT, "START SCRIPT", tokenLine, tokenCol); }
             else if (word == "END"    && combined.StartsWith("END SCRIPT"))    { SkipWhitespace(); ConsumeWord("SCRIPT"); AddToken(TokenType.END_SCRIPT,   "END SCRIPT",   tokenLine, tokenCol); }

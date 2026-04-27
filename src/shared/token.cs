@@ -1,6 +1,6 @@
 using System;
 
-namespace LexerInterpreter.Lexer;
+namespace LexorInterpreter.Shared;
 public class Token
 {
     public TokenType Type;
