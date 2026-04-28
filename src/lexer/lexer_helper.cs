@@ -1,7 +1,7 @@
 using System.Text;
 using LexorInterpreter.Shared;
 
-namespace LexerInterpreter.Lexer;
+namespace LexorInterpreter.Lexer;
 public partial class LexorLexer
 {
     // Helper Functions;

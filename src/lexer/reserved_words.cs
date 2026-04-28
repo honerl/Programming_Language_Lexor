@@ -1,7 +1,7 @@
 using System;
 using LexorInterpreter.Shared;
 
-namespace LexerInterpreter.Lexer;
+namespace LexorInterpreter.Lexer;
 public static class ReservedWords {
     public static readonly Dictionary<String, TokenType> words =
     new Dictionary<String, TokenType>
