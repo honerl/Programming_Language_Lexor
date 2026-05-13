@@ -1,23 +1,24 @@
 using System;
 using System.Collections.Generic;
 
-namespace LexorInterpreter.Interpreter;
-    /// <summary>
+namespace LexorInterpreter.Interpreter
+{
     /// Stores all declared variables and their values at runtime.
     /// LEXOR is strongly-typed so each variable tracks its declared type.
-    /// </summary>
     public class SymbolTable
     {
-        // ── Internal Entry ───────────────────────────────────────
+        // Internal Entry
         private class Entry
         {
             public string Type;    // "INT", "FLOAT", "CHAR", "BOOL"
             public object Value;   // actual runtime value
+            public int    Line;    // line number where variable was declared
 
-            public Entry(string type, object value)
+            public Entry(string type, object value, int line)
             {
                 Type  = type;
                 Value = value;
+                Line  = line;
             }
         }
 
@@ -28,24 +29,25 @@ namespace LexorInterpreter.Interpreter;
             _table = new Dictionary<string, Entry>();
         }
 
-        // ── Declare ──────────────────────────────────────────────
+        // Declare
 
         /// <summary>
         /// Declares a new variable with a type and optional initial value.
         /// If no initial value is provided the default for that type is used.
         /// Throws if the variable is already declared.
         /// </summary>
-        public void Declare(string name, string type, object value = null)
+        public void Declare(string name, string type, object value = null, int line = 0)
         {
             if (_table.ContainsKey(name))
-                throw new LexorRuntimeException(
-                    string.Format("Variable '{0}' is already declared.", name));
+                throw new LexorRuntimeException(string.Format(
+                    "Line {0}: Variable '{1}' is already declared (first declared on Line {2}).",
+                    line, name, _table[name].Line));
 
             object initial = value ?? DefaultValue(type);
-            _table[name] = new Entry(type, initial);
+            _table[name] = new Entry(type, initial, line);
         }
 
-        // ── Get ──────────────────────────────────────────────────
+        // Get
 
         /// <summary>
         /// Returns the current value of a variable.
@@ -60,7 +62,7 @@ namespace LexorInterpreter.Interpreter;
             return entry.Value;
         }
 
-        // ── Get Type ─────────────────────────────────────────────
+        // Get Type
 
         /// <summary>Returns the declared type string of a variable.</summary>
         public string GetType(string name)
@@ -72,7 +74,7 @@ namespace LexorInterpreter.Interpreter;
             return entry.Type;
         }
 
-        // ── Set ──────────────────────────────────────────────────
+        // Set
 
         /// <summary>
         /// Assigns a new value to an already-declared variable.
@@ -90,14 +92,14 @@ namespace LexorInterpreter.Interpreter;
             entry.Value = coerced;
         }
 
-        // ── Exists ───────────────────────────────────────────────
+        // Exists
 
         public bool Exists(string name)
         {
             return _table.ContainsKey(name);
         }
 
-        // ── Default Values ───────────────────────────────────────
+        // Default Values
 
         /// <summary>Returns the zero/default value for a LEXOR data type.</summary>
         private object DefaultValue(string type)
@@ -114,7 +116,7 @@ namespace LexorInterpreter.Interpreter;
             }
         }
 
-        // ── Type Coercion / Checking ─────────────────────────────
+        // Type Coercion / Checking
 
         /// <summary>
         /// Coerces a runtime value to match the declared type.
@@ -181,7 +183,7 @@ namespace LexorInterpreter.Interpreter;
             }
         }
 
-        // ── Debug Dump ───────────────────────────────────────────
+        // Debug Dump
 
         public void Dump()
         {
@@ -195,9 +197,10 @@ namespace LexorInterpreter.Interpreter;
         }
     }
 
-    // ── Runtime Exception ────────────────────────────────────────
+    // Runtime Exception
 
     public class LexorRuntimeException : Exception
     {
         public LexorRuntimeException(string message) : base(message) { }
     }
+}

@@ -7,13 +7,11 @@ using LexorInterpreter.Shared;
 using LexorInterpreter.Lexer;
 
 namespace LexorInterpreter;
-    class Program
+class Program
     {
         static void Main(string[] args)
         {
-            string source;
-
-            // ── Load source ──────────────────────────────────────
+            //  File mode: dotnet run -- myfile.lexor 
             if (args.Length > 0)
             {
                 if (!File.Exists(args[0]))
@@ -21,26 +19,93 @@ namespace LexorInterpreter;
                     Console.WriteLine("Error: File '{0}' not found.", args[0]);
                     return;
                 }
-                source = File.ReadAllText(args[0]);
-            }
-            else
-            {
-                // Default sample from the LEXOR spec
-                source =
-                    "%% this is a sample program in LEXOR\n" +
-                    "SCRIPT AREA\n" +
-                    "START SCRIPT\n" +
-                    "DECLARE INT x, y, z=5\n" +
-                    "DECLARE CHAR a_1='n'\n" +
-                    "DECLARE BOOL t=\"TRUE\"\n" +
-                    "x=y=4\n" +
-                    "a_1='c'\n" +
-                    "%% this is a comment\n" +
-                    "PRINT: x & t & z & $ & a_1 & [] & \"last\"\n" +
-                    "END SCRIPT\n";
+                RunSource(File.ReadAllText(args[0]));
+                return;
             }
 
-            // ── Stage 1: Lexical Analysis ────────────────────────
+            //  Interactive REPL mode
+            RunREPL();
+        }
+        
+
+        static void RunREPL()
+        {
+            Console.WriteLine("=============================================");
+            Console.WriteLine("        LEXOR Interpreter v1.0");
+            Console.WriteLine("=============================================");
+            Console.WriteLine("Write your LEXOR program line by line.");
+            Console.WriteLine("Commands:");
+            Console.WriteLine("  RUN   - execute the program");
+            Console.WriteLine("  CLEAR - clear and start over");
+            Console.WriteLine("  EXIT  - quit the interpreter");
+            Console.WriteLine("=============================================");
+            Console.WriteLine();
+
+            List<string> lines = new List<string>();
+
+            while (true)
+            {
+                Console.Write("LEXOR> ");
+                string input = Console.ReadLine();
+
+                // Handle null
+                if (input == null) break;
+
+                string trimmed = input.Trim();
+
+                // COMMANDS *TO BE UPDATED PA
+                if (trimmed == "EXIT")
+                {
+                    Console.WriteLine("Goodbye!");
+                    break;
+                }
+
+                if (trimmed == "CLEAR")
+                {
+                    lines.Clear();
+                    Console.WriteLine("Program cleared.\n");
+                    continue;
+                }
+
+                if (trimmed == "LIST")
+                {
+                    if (lines.Count == 0)
+                    {
+                        Console.WriteLine("(empty)\n");
+                    }
+                    else
+                    {
+                        Console.WriteLine("--- Current Program ---");
+                        for (int i = 0; i < lines.Count; i++)
+                            Console.WriteLine("{0,3}: {1}", i + 1, lines[i]);
+                        Console.WriteLine("-----------------------\n");
+                    }
+                    continue;
+                }
+
+                if (trimmed == "RUN")
+                {
+                    if (lines.Count == 0)
+                    {
+                        Console.WriteLine("Nothing to run. Type your program first.\n");
+                        continue;
+                    }
+
+                    string source = string.Join("\n", lines);
+                    Console.WriteLine("\n--- Output ---");
+                    RunSource(source);
+                    Console.WriteLine("--------------\n");
+                    continue;
+                }
+
+                // ACCUMULATE PROGRAM LINES
+                lines.Add(input);
+            }
+        }
+
+        static void RunSource(string source)
+        {
+            // Stage 1: Lex
             LexorLexer lexer        = new LexorLexer(source);
             List<Token> tokens       = lexer.Tokenize();
             List<string> lexerErrors = lexer.GetErrors();
@@ -53,22 +118,21 @@ namespace LexorInterpreter;
                 Console.WriteLine();
             }
 
-            // ── Stage 2: Parsing ─────────────────────────────────
+            // Stage 2: Parse
             ProgramNode ast;
             try
             {
-                Parser.Parser parser =
-                    new Parser.Parser(tokens);
+                LexorInterpreter.Parser.Parser parser =
+                    new LexorInterpreter.Parser.Parser(tokens);
                 ast = parser.Parse();
             }
             catch (LexorParseException ex)
             {
-                Console.WriteLine("=== Syntax Error ===");
-                Console.WriteLine(ex.Message);
+                Console.WriteLine("Syntax Error: " + ex.Message);
                 return;
             }
 
-            // ── Stage 3: Interpretation ──────────────────────────
+            // Stage 3: Interpret
             try
             {
                 Interpreter.Interpreter interpreter =
@@ -77,8 +141,7 @@ namespace LexorInterpreter;
             }
             catch (LexorRuntimeException ex)
             {
-                Console.WriteLine("=== Runtime Error ===");
-                Console.WriteLine(ex.Message);
+                Console.WriteLine("Runtime Error: " + ex.Message);
             }
         }
     }
