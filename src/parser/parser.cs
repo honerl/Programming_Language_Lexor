@@ -5,20 +5,18 @@ namespace LexorInterpreter.Parser
 {
     using LexorInterpreter.Shared;
 
-    // ═══════════════════════════════════════════════════════════════
     //  AST Node Definitions
-    // ═══════════════════════════════════════════════════════════════
 
     public abstract class ASTNode { }
 
-    // ── Program ──────────────────────────────────────────────────
+    // PROGRAM
     public class ProgramNode : ASTNode
     {
         public List<ASTNode> Declarations  = new List<ASTNode>();
         public List<ASTNode> Statements    = new List<ASTNode>();
     }
 
-    // ── Declare ──────────────────────────────────────────────────
+    //  Declare 
     public class DeclareNode : ASTNode
     {
         public string            DataType;   // INT | FLOAT | CHAR | BOOL
@@ -29,28 +27,29 @@ namespace LexorInterpreter.Parser
     {
         public string  Name;
         public ASTNode InitValue; // null = no initializer
+        public int     Line;      // line number of declaration
     }
 
-    // ── Assign ───────────────────────────────────────────────────
+    //  Assign 
     public class AssignNode : ASTNode
     {
         public string  VariableName;
         public ASTNode Value;
     }
 
-    // ── Print ────────────────────────────────────────────────────
+    //  Print 
     public class PrintNode : ASTNode
     {
         public List<ASTNode> Parts = new List<ASTNode>(); // items separated by &
     }
 
-    // ── Scan ─────────────────────────────────────────────────────
+    //  Scan 
     public class ScanNode : ASTNode
     {
         public List<string> Variables = new List<string>();
     }
 
-    // ── Expressions ──────────────────────────────────────────────
+    //  Expressions 
     public class LiteralNode : ASTNode
     {
         public object Value; // int | double | char | bool | string
@@ -81,9 +80,7 @@ namespace LexorInterpreter.Parser
         public string Content; // the text inside the brackets
     }
 
-    // ═══════════════════════════════════════════════════════════════
     //  Parser
-    // ═══════════════════════════════════════════════════════════════
 
     public class Parser
     {
@@ -96,19 +93,41 @@ namespace LexorInterpreter.Parser
             _current = 0;
         }
 
-        // ── Public Entry ─────────────────────────────────────────
+        //  Public Entry 
 
         public ProgramNode Parse()
         {
             ProgramNode program = new ProgramNode();
 
             SkipNewlines();
+
+            //  Comments-only or empty file: valid, do nothing 
+            if (Check(TokenType.EOF))
+                return program;
+
+            //  Validate: must start with SCRIPT AREA 
+            if (!Check(TokenType.SCRIPT_AREA))
+                throw new LexorParseException(string.Format(
+                    "Line {0}: A LEXOR program must begin with SCRIPT AREA. Found '{1}' instead.",
+                    Peek().Line, Peek().Lexeme));
+
             Expect(TokenType.SCRIPT_AREA);
             SkipNewlines();
+
+            //  Validate: must have START SCRIPT 
+            if (Check(TokenType.EOF))
+                throw new LexorParseException(
+                    "Missing START SCRIPT. Add START SCRIPT after SCRIPT AREA.");
+
+            if (!Check(TokenType.START_SCRIPT))
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Expected START SCRIPT after SCRIPT AREA. Found '{1}' instead.",
+                    Peek().Line, Peek().Lexeme));
+
             Expect(TokenType.START_SCRIPT);
             SkipNewlines();
 
-            // Declarations must come first
+            //  Declarations must come first 
             while (Check(TokenType.DECLARE) || Check(TokenType.COMMENT))
             {
                 if (Check(TokenType.COMMENT)) { Advance(); SkipNewlines(); continue; }
@@ -116,7 +135,7 @@ namespace LexorInterpreter.Parser
                 SkipNewlines();
             }
 
-            // Executable statements
+            //  Executable statements 
             while (!Check(TokenType.END_SCRIPT) && !Check(TokenType.EOF))
             {
                 if (Check(TokenType.COMMENT))  { Advance(); SkipNewlines(); continue; }
@@ -129,11 +148,16 @@ namespace LexorInterpreter.Parser
                 SkipNewlines();
             }
 
+            //  Validate: must end with END SCRIPT 
+            if (Check(TokenType.EOF))
+                throw new LexorParseException(
+                    "Missing END SCRIPT. Every LEXOR program must end with END SCRIPT.");
+
             Expect(TokenType.END_SCRIPT);
             return program;
         }
 
-        // ── Statement Dispatcher ─────────────────────────────────
+        //  Statement Dispatcher 
 
         private ASTNode ParseStatement()
         {
@@ -146,7 +170,7 @@ namespace LexorInterpreter.Parser
                 Peek().Lexeme, Peek().Type, Peek().Line));
         }
 
-        // ── DECLARE ──────────────────────────────────────────────
+        //  DECLARE 
 
         private DeclareNode ParseDeclare()
         {
@@ -188,6 +212,7 @@ namespace LexorInterpreter.Parser
             Token nameToken = Expect(TokenType.IDENTIFIER);
             VarInitNode node = new VarInitNode();
             node.Name = nameToken.Lexeme;
+            node.Line = nameToken.Line;
 
             if (Check(TokenType.ASSIGN))
             {
@@ -244,7 +269,7 @@ namespace LexorInterpreter.Parser
                 t.Lexeme, t.Line));
         }
 
-        // ── ASSIGN ───────────────────────────────────────────────
+        //  ASSIGN 
 
         private ASTNode ParseAssign()
         {
@@ -264,7 +289,7 @@ namespace LexorInterpreter.Parser
             return new AssignNode { VariableName = varName, Value = value };
         }
 
-        // ── PRINT ────────────────────────────────────────────────
+        //  PRINT 
 
         private PrintNode ParsePrint()
         {
@@ -324,7 +349,7 @@ namespace LexorInterpreter.Parser
             return ParseExpression();
         }
 
-        // ── SCAN ─────────────────────────────────────────────────
+        //  SCAN 
 
         private ScanNode ParseScan()
         {
@@ -343,7 +368,7 @@ namespace LexorInterpreter.Parser
             return node;
         }
 
-        // ── Expression Parsing (Recursive Descent) ───────────────
+        //  Expression Parsing (Recursive Descent) 
         // Precedence (lowest → highest):
         //   OR
         //   AND
@@ -509,7 +534,7 @@ namespace LexorInterpreter.Parser
                 t.Lexeme, t.Type, t.Line));
         }
 
-        // ── Scanner Helpers ──────────────────────────────────────
+        //  Scanner Helpers 
 
         private Token Peek()
         {
@@ -551,7 +576,7 @@ namespace LexorInterpreter.Parser
         }
     }
 
-    // ── Parse Exception ──────────────────────────────────────────
+    //  Parse Exception 
 
     public class LexorParseException : Exception
     {
