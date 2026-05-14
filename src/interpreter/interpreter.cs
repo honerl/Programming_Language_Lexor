@@ -5,12 +5,9 @@ using System.Text;
 namespace LexorInterpreter.Interpreter
 {
     using LexorInterpreter.Parser;
-
-    /// <summary>
     /// Walks the AST produced by the Parser and executes each node.
     /// Supports: DECLARE, ASSIGN (chained), PRINT, SCAN,
     ///           Unary (+/-/NOT), Arithmetic, Logical, Relational ops.
-    /// </summary>
     public class Interpreter
     {
         private SymbolTable _symbols;
@@ -20,9 +17,9 @@ namespace LexorInterpreter.Interpreter
             _symbols = new SymbolTable();
         }
 
-        // ═════════════════════════════════════════════════════════
+        
         //  Public Entry
-        // ═════════════════════════════════════════════════════════
+        
 
         public void Execute(ProgramNode program)
         {
@@ -35,9 +32,9 @@ namespace LexorInterpreter.Interpreter
                 ExecuteNode(node);
         }
 
-        // ═════════════════════════════════════════════════════════
+        
         //  Node Dispatcher
-        // ═════════════════════════════════════════════════════════
+        
 
         private void ExecuteNode(ASTNode node)
         {
@@ -50,9 +47,9 @@ namespace LexorInterpreter.Interpreter
                     string.Format("Unknown statement node: {0}", node.GetType().Name));
         }
 
-        // ═════════════════════════════════════════════════════════
+        
         //  DECLARE
-        // ═════════════════════════════════════════════════════════
+        
 
         private void ExecuteDeclare(DeclareNode node)
         {
@@ -66,9 +63,9 @@ namespace LexorInterpreter.Interpreter
             }
         }
 
-        // ═════════════════════════════════════════════════════════
+        
         //  ASSIGN  (supports chained: x=y=4)
-        // ═════════════════════════════════════════════════════════
+        
 
         private void ExecuteAssign(AssignNode node)
         {
@@ -76,13 +73,13 @@ namespace LexorInterpreter.Interpreter
             _symbols.Set(node.VariableName, value);
         }
 
-        // ═════════════════════════════════════════════════════════
+        
         //  PRINT
         //  Syntax: PRINT: <expr> & <expr> & ...
         //  $  → newline (flush current line, start new)
         //  [x]→ escape — print x literally
         //  Uses Console.Write so output stays on same line until $ or end
-        // ═════════════════════════════════════════════════════════
+        
 
         private void ExecutePrint(PrintNode node)
         {
@@ -121,12 +118,12 @@ namespace LexorInterpreter.Interpreter
             Console.WriteLine();
         }
 
-        // ═════════════════════════════════════════════════════════
+        
         //  SCAN
         //  Syntax: SCAN: var1[, var2, ...]
         //  Single variable  → reads one line as the value
         //  Multiple vars    → reads one comma-separated line
-        // ═════════════════════════════════════════════════════════
+        
 
         private void ExecuteScan(ScanNode node)
         {
@@ -154,7 +151,7 @@ namespace LexorInterpreter.Interpreter
             }
         }
 
-        // ── Input parsing with type checking ─────────────────────
+        // Input parsing with type checking
 
         private object ParseInput(string raw, string type, string varName)
         {
@@ -201,9 +198,9 @@ namespace LexorInterpreter.Interpreter
             }
         }
 
-        // ═════════════════════════════════════════════════════════
+        
         //  Evaluator — resolves any expression node to a value
-        // ═════════════════════════════════════════════════════════
+        
 
         public object Evaluate(ASTNode node)
         {
@@ -229,9 +226,9 @@ namespace LexorInterpreter.Interpreter
                 string.Format("Cannot evaluate node of type {0}.", node.GetType().Name));
         }
 
-        // ═════════════════════════════════════════════════════════
+        
         //  Unary Operators:  +(x)  -(x)  NOT(x)
-        // ═════════════════════════════════════════════════════════
+        
 
         private object EvaluateUnary(UnaryOpNode node)
         {
@@ -261,12 +258,12 @@ namespace LexorInterpreter.Interpreter
             }
         }
 
-        // ═════════════════════════════════════════════════════════
+        
         //  Binary Operators
         //  Arithmetic : +  -  *  /  %
         //  Relational : >  <  >=  <=  ==  <>
         //  Logical    : AND  OR
-        // ═════════════════════════════════════════════════════════
+        
 
         private object EvaluateBinary(BinaryOpNode node)
         {
@@ -300,7 +297,7 @@ namespace LexorInterpreter.Interpreter
             }
         }
 
-        // ── Arithmetic helper ─────────────────────────────────────
+        // Arithmetic helper
 
         private object ArithmeticOp(object left, object right, string op)
         {
@@ -339,7 +336,7 @@ namespace LexorInterpreter.Interpreter
                 string.Format("Cannot apply '{0}' to {1} and {2}.", op, left, right));
         }
 
-        // ── Comparison helper ─────────────────────────────────────
+        // Comparison helper
 
         private object CompareOp(object left, object right, string op)
         {
@@ -355,7 +352,7 @@ namespace LexorInterpreter.Interpreter
             throw new LexorRuntimeException("Unknown comparison operator.");
         }
 
-        // ── Equality helper ───────────────────────────────────────
+        // Equality helper
 
         private object EqualityOp(object left, object right, bool isEqual)
         {
@@ -366,7 +363,7 @@ namespace LexorInterpreter.Interpreter
             return isEqual ? result : !result;
         }
 
-        // ── Type helpers ──────────────────────────────────────────
+        // Type helpers
 
         private int ToInt(object val)
         {
@@ -391,9 +388,9 @@ namespace LexorInterpreter.Interpreter
                     string.Format("Operator {0} requires BOOL operands, got {1}.", op, val.GetType().Name));
         }
 
-        // ═════════════════════════════════════════════════════════
+        
         //  Output Formatting
-        // ═════════════════════════════════════════════════════════
+        
 
         private string FormatValue(object val)
         {

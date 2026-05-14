@@ -4,11 +4,9 @@ using LexorInterpreter.Shared;
 
 namespace LexorInterpreter.Parser.Scanner
 {
-    /// <summary>
     /// Wraps the token list produced by the Lexer and provides
     /// clean navigation methods for the Parser to consume.
     /// The Parser never touches the raw List&lt;Token&gt; directly.
-    /// </summary>
     public class Scanner
     {
         private List<Token> _tokens;
@@ -20,7 +18,7 @@ namespace LexorInterpreter.Parser.Scanner
             _current = 0;
         }
 
-        // ── Navigation ───────────────────────────────────────────
+        //  Navigation 
 
         /// <summary>Returns the current token without consuming it.</summary>
         public Token Peek()
@@ -93,7 +91,7 @@ namespace LexorInterpreter.Parser.Scanner
         }
     }
 
-    // ── Scanner Exception ────────────────────────────────────────
+    //  Scanner Exception 
 
     public class ScannerException : Exception
     {
