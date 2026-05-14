@@ -29,6 +29,7 @@ namespace LexorInterpreter.Parser
     {
         public string  Name;
         public ASTNode InitValue; // null = no initializer
+        public int     Line;      // line number of declaration
     }
 
     // ── Assign ───────────────────────────────────────────────────
@@ -103,8 +104,30 @@ namespace LexorInterpreter.Parser
             ProgramNode program = new ProgramNode();
 
             SkipNewlines();
+
+            // ── Comments-only or empty file: valid, do nothing ────
+            if (Check(TokenType.EOF))
+                return program;
+
+            // ── Validate: must start with SCRIPT AREA ────────────
+            if (!Check(TokenType.SCRIPT_AREA))
+                throw new LexorParseException(string.Format(
+                    "Line {0}: A LEXOR program must begin with SCRIPT AREA. Found '{1}' instead.",
+                    Peek().Line, Peek().Lexeme));
+
             Expect(TokenType.SCRIPT_AREA);
             SkipNewlines();
+
+            // ── Validate: must have START SCRIPT ─────────────────
+            if (Check(TokenType.EOF))
+                throw new LexorParseException(
+                    "Missing START SCRIPT. Add START SCRIPT after SCRIPT AREA.");
+
+            if (!Check(TokenType.START_SCRIPT))
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Expected START SCRIPT after SCRIPT AREA. Found '{1}' instead.",
+                    Peek().Line, Peek().Lexeme));
+
             Expect(TokenType.START_SCRIPT);
             SkipNewlines();
 
@@ -128,6 +151,11 @@ namespace LexorInterpreter.Parser
 
                 SkipNewlines();
             }
+
+            // ── Validate: must end with END SCRIPT ────────────────
+            if (Check(TokenType.EOF))
+                throw new LexorParseException(
+                    "Missing END SCRIPT. Every LEXOR program must end with END SCRIPT.");
 
             Expect(TokenType.END_SCRIPT);
             return program;
@@ -188,6 +216,7 @@ namespace LexorInterpreter.Parser
             Token nameToken = Expect(TokenType.IDENTIFIER);
             VarInitNode node = new VarInitNode();
             node.Name = nameToken.Lexeme;
+            node.Line = nameToken.Line;
 
             if (Check(TokenType.ASSIGN))
             {
@@ -206,6 +235,48 @@ namespace LexorInterpreter.Parser
         {
             Token t = Peek();
 
+            // ── Type mismatch checks at parse time ────────────────
+            if (t.Type == TokenType.FLOAT_LITERAL && dataType == "INT")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign FLOAT value '{1}' to INT variable. Use an integer value.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.INT_LITERAL && dataType == "CHAR")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign numeric value '{1}' to CHAR variable. Use a char literal like 'a'.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.INT_LITERAL && dataType == "BOOL")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign numeric value '{1}' to BOOL variable. Use TRUE or FALSE.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.FLOAT_LITERAL && dataType == "BOOL")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign FLOAT value '{1}' to BOOL variable. Use TRUE or FALSE.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.FLOAT_LITERAL && dataType == "CHAR")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign FLOAT value '{1}' to CHAR variable. Use a char literal like 'a'.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.CHAR_LITERAL && dataType == "INT")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign CHAR value '{1}' to INT variable. Use an integer value.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.CHAR_LITERAL && dataType == "FLOAT")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign CHAR value '{1}' to FLOAT variable. Use a numeric value.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.CHAR_LITERAL && dataType == "BOOL")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign CHAR value '{1}' to BOOL variable. Use TRUE or FALSE.",
+                    t.Line, t.Lexeme));
+
+            // ── Valid literal parsing ─────────────────────────────
             if (t.Type == TokenType.INT_LITERAL)
             {
                 Advance();

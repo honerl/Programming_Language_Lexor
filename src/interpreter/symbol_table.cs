@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace LexorInterpreter.Interpreter;
+namespace LexorInterpreter.Interpreter
+{
     /// <summary>
     /// Stores all declared variables and their values at runtime.
     /// LEXOR is strongly-typed so each variable tracks its declared type.
@@ -13,11 +14,13 @@ namespace LexorInterpreter.Interpreter;
         {
             public string Type;    // "INT", "FLOAT", "CHAR", "BOOL"
             public object Value;   // actual runtime value
+            public int    Line;    // line number where variable was declared
 
-            public Entry(string type, object value)
+            public Entry(string type, object value, int line)
             {
                 Type  = type;
                 Value = value;
+                Line  = line;
             }
         }
 
@@ -35,14 +38,15 @@ namespace LexorInterpreter.Interpreter;
         /// If no initial value is provided the default for that type is used.
         /// Throws if the variable is already declared.
         /// </summary>
-        public void Declare(string name, string type, object value = null)
+        public void Declare(string name, string type, object value = null, int line = 0)
         {
             if (_table.ContainsKey(name))
-                throw new LexorRuntimeException(
-                    string.Format("Variable '{0}' is already declared.", name));
+                throw new LexorRuntimeException(string.Format(
+                    "Line {0}: Variable '{1}' is already declared (first declared on Line {2}).",
+                    line, name, _table[name].Line));
 
             object initial = value ?? DefaultValue(type);
-            _table[name] = new Entry(type, initial);
+            _table[name] = new Entry(type, initial, line);
         }
 
         // ── Get ──────────────────────────────────────────────────
@@ -128,18 +132,27 @@ namespace LexorInterpreter.Interpreter;
                 {
                     case "INT":
                         if (value is int)    return value;
-                        if (value is double) return (int)(double)value;
+                        if (value is double)
+                        {
+                            double d = (double)value;
+                            // Reject if it has a fractional part — LEXOR is strongly typed
+                            if (d != Math.Floor(d))
+                                throw new LexorRuntimeException(string.Format(
+                                    "Type error: Cannot assign FLOAT value '{0}' to INT variable '{1}'. Use an integer value.",
+                                    d, varName));
+                            return (int)d;
+                        }
                         if (value is bool)
                             throw new LexorRuntimeException(
-                                string.Format("Cannot assign BOOL to INT variable '{0}'.", varName));
+                                string.Format("Type error: Cannot assign BOOL to INT variable '{0}'.", varName));
                         return Convert.ToInt32(value);
 
                     case "FLOAT":
                         if (value is double) return value;
                         if (value is int)    return (double)(int)value;
                         if (value is bool)
-                            throw new LexorRuntimeException(
-                                string.Format("Cannot assign BOOL to FLOAT variable '{0}'.", varName));
+                            throw new LexorRuntimeException(string.Format(
+                                "Type error: Cannot assign BOOL to FLOAT variable '{0}'.", varName));
                         return Convert.ToDouble(value);
 
                     case "CHAR":
@@ -148,11 +161,14 @@ namespace LexorInterpreter.Interpreter;
                         {
                             string s = (string)value;
                             if (s.Length == 1) return s[0];
-                            throw new LexorRuntimeException(
-                                string.Format("Cannot assign string to CHAR variable '{0}': must be a single character.", varName));
+                            throw new LexorRuntimeException(string.Format(
+                                "Type error: Cannot assign string to CHAR variable '{0}': must be a single character.", varName));
                         }
-                        throw new LexorRuntimeException(
-                            string.Format("Cannot assign {0} to CHAR variable '{1}'.", value.GetType().Name, varName));
+                        if (value is int || value is double)
+                            throw new LexorRuntimeException(string.Format(
+                                "Type error: Cannot assign numeric value to CHAR variable '{0}'. Use a char literal like 'a'.", varName));
+                        throw new LexorRuntimeException(string.Format(
+                            "Type error: Cannot assign {0} to CHAR variable '{1}'.", value.GetType().Name, varName));
 
                     case "BOOL":
                         if (value is bool)   return value;
@@ -162,8 +178,11 @@ namespace LexorInterpreter.Interpreter;
                             if (s == "TRUE")  return true;
                             if (s == "FALSE") return false;
                         }
-                        throw new LexorRuntimeException(
-                            string.Format("Cannot assign {0} to BOOL variable '{1}'.", value.GetType().Name, varName));
+                        if (value is int || value is double)
+                            throw new LexorRuntimeException(string.Format(
+                                "Type error: Cannot assign numeric value to BOOL variable '{0}'. Use TRUE or FALSE.", varName));
+                        throw new LexorRuntimeException(string.Format(
+                            "Type error: Cannot assign {0} to BOOL variable '{1}'. Use TRUE or FALSE.", value.GetType().Name, varName));
 
                     default:
                         throw new LexorRuntimeException(
@@ -201,3 +220,4 @@ namespace LexorInterpreter.Interpreter;
     {
         public LexorRuntimeException(string message) : base(message) { }
     }
+}
