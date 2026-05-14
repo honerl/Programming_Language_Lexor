@@ -23,21 +23,175 @@ class Program
                 return;
             }
 
-            //  Interactive REPL mode
-            RunREPL();
+            //  Interactive menu mode
+            ShowMainMenu();
+        }
+
+        static void ShowMainMenu()
+        {
+            while (true)
+            {
+                Console.Clear();
+                Console.WriteLine("=============================================");
+                Console.WriteLine("        LEXOR Interpreter v1.0");
+                Console.WriteLine("=============================================");
+                Console.WriteLine("Choose an option:");
+                Console.WriteLine("  1 - REPL Mode (type code line by line)");
+                Console.WriteLine("  2 - Open a file");
+                Console.WriteLine("  3 - Paste code directly");
+                Console.WriteLine("  4 - Exit");
+                Console.WriteLine("=============================================");
+                Console.Write("Enter choice (1-4): ");
+                
+                string choice = Console.ReadLine()?.Trim() ?? "";
+
+                switch (choice)
+                {
+                    case "1":
+                        RunREPL();
+                        break;
+                    case "2":
+                        OpenFileAndRun();
+                        break;
+                    case "3":
+                        PasteCodeMode();
+                        break;
+                    case "4":
+                        Console.WriteLine("Goodbye!");
+                        return;
+                    default:
+                        Console.WriteLine("Invalid choice. Press Enter to continue...");
+                        Console.ReadLine();
+                        break;
+                }
+            }
+        }
+
+        static void OpenFileAndRun()
+        {
+            Console.Clear();
+            Console.WriteLine("=============================================");
+            Console.WriteLine("        OPEN FILE");
+            Console.WriteLine("=============================================");
+            Console.WriteLine("Current directory: {0}", Directory.GetCurrentDirectory());
+            Console.WriteLine("\nAvailable .lexor files:");
+            
+            string[] lexorFiles = Directory.GetFiles(Directory.GetCurrentDirectory(), "*.lexor", SearchOption.AllDirectories);
+            
+            if (lexorFiles.Length == 0)
+            {
+                Console.WriteLine("(No .lexor files found)");
+                Console.WriteLine("\nEnter full file path:");
+                string filePath = Console.ReadLine()?.Trim() ?? "";
+                
+                if (string.IsNullOrEmpty(filePath))
+                {
+                    Console.WriteLine("Cancelled. Press Enter to return...");
+                    Console.ReadLine();
+                    return;
+                }
+
+                filePath = filePath.Replace("\"", ""); // Remove quotes if pasted
+
+                if (!File.Exists(filePath))
+                {
+                    Console.WriteLine("File not found: {0}", filePath);
+                    Console.WriteLine("Press Enter to return...");
+                    Console.ReadLine();
+                    return;
+                }
+
+                RunSource(File.ReadAllText(filePath));
+            }
+            else
+            {
+                for (int i = 0; i < lexorFiles.Length; i++)
+                {
+                    Console.WriteLine("  {0} - {1}", i + 1, lexorFiles[i]);
+                }
+                
+                Console.WriteLine("\nEnter file number or full path:");
+                string input = Console.ReadLine()?.Trim() ?? "";
+
+                if (string.IsNullOrEmpty(input))
+                {
+                    Console.WriteLine("Cancelled. Press Enter to return...");
+                    Console.ReadLine();
+                    return;
+                }
+
+                string filePath;
+
+                if (int.TryParse(input, out int fileNum) && fileNum >= 1 && fileNum <= lexorFiles.Length)
+                {
+                    filePath = lexorFiles[fileNum - 1];
+                }
+                else
+                {
+                    filePath = input.Replace("\"", "");
+                    if (!File.Exists(filePath))
+                    {
+                        Console.WriteLine("File not found: {0}", filePath);
+                        Console.WriteLine("Press Enter to return...");
+                        Console.ReadLine();
+                        return;
+                    }
+                }
+
+                RunSource(File.ReadAllText(filePath));
+            }
+
+            Console.WriteLine("\nPress Enter to return to menu...");
+            Console.ReadLine();
+        }
+
+        static void PasteCodeMode()
+        {
+            Console.Clear();
+            Console.WriteLine("=============================================");
+            Console.WriteLine("        PASTE CODE MODE");
+            Console.WriteLine("=============================================");
+            Console.WriteLine("Paste your LEXOR code below.");
+            Console.WriteLine("Enter an empty line to execute:");
+            Console.WriteLine();
+
+            List<string> lines = new List<string>();
+            while (true)
+            {
+                string line = Console.ReadLine();
+                if (string.IsNullOrEmpty(line))
+                    break;
+                lines.Add(line);
+            }
+
+            if (lines.Count == 0)
+            {
+                Console.WriteLine("No code entered. Press Enter to return...");
+                Console.ReadLine();
+                return;
+            }
+
+            string source = string.Join("\n", lines);
+            Console.WriteLine("\n--- Output ---");
+            RunSource(source);
+            Console.WriteLine("--------------");
+            Console.WriteLine("\nPress Enter to return to menu...");
+            Console.ReadLine();
         }
         
 
         static void RunREPL()
         {
+            Console.Clear();
             Console.WriteLine("=============================================");
-            Console.WriteLine("        LEXOR Interpreter v1.0");
+            Console.WriteLine("        LEXOR Interpreter v1.0 - REPL Mode");
             Console.WriteLine("=============================================");
             Console.WriteLine("Write your LEXOR program line by line.");
             Console.WriteLine("Commands:");
             Console.WriteLine("  RUN   - execute the program");
             Console.WriteLine("  CLEAR - clear and start over");
-            Console.WriteLine("  EXIT  - quit the interpreter");
+            Console.WriteLine("  LIST  - show current program");
+            Console.WriteLine("  EXIT  - return to menu");
             Console.WriteLine("=============================================");
             Console.WriteLine();
 
@@ -53,11 +207,12 @@ class Program
 
                 string trimmed = input.Trim();
 
-                // COMMANDS *TO BE UPDATED PA
+                // COMMANDS
                 if (trimmed == "EXIT")
                 {
-                    Console.WriteLine("Goodbye!");
-                    break;
+                    Console.WriteLine("Returning to menu...\n");
+                    Console.ReadLine();
+                    return;
                 }
 
                 if (trimmed == "CLEAR")
