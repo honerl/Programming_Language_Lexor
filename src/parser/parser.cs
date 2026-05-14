@@ -231,6 +231,48 @@ namespace LexorInterpreter.Parser
         {
             Token t = Peek();
 
+            // ── Type mismatch checks at parse time ────────────────
+            if (t.Type == TokenType.FLOAT_LITERAL && dataType == "INT")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign FLOAT value '{1}' to INT variable. Use an integer value.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.INT_LITERAL && dataType == "CHAR")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign numeric value '{1}' to CHAR variable. Use a char literal like 'a'.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.INT_LITERAL && dataType == "BOOL")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign numeric value '{1}' to BOOL variable. Use TRUE or FALSE.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.FLOAT_LITERAL && dataType == "BOOL")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign FLOAT value '{1}' to BOOL variable. Use TRUE or FALSE.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.FLOAT_LITERAL && dataType == "CHAR")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign FLOAT value '{1}' to CHAR variable. Use a char literal like 'a'.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.CHAR_LITERAL && dataType == "INT")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign CHAR value '{1}' to INT variable. Use an integer value.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.CHAR_LITERAL && dataType == "FLOAT")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign CHAR value '{1}' to FLOAT variable. Use a numeric value.",
+                    t.Line, t.Lexeme));
+
+            if (t.Type == TokenType.CHAR_LITERAL && dataType == "BOOL")
+                throw new LexorParseException(string.Format(
+                    "Line {0}: Type error : cannot assign CHAR value '{1}' to BOOL variable. Use TRUE or FALSE.",
+                    t.Line, t.Lexeme));
+
+            // ── Valid literal parsing ─────────────────────────────
             if (t.Type == TokenType.INT_LITERAL)
             {
                 Advance();

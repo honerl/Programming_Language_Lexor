@@ -91,7 +91,7 @@ namespace LexorInterpreter.Lexer
             var sb = new StringBuilder();
             while (_pos < _source.Length && (char.IsLetterOrDigit(Peek()) || Peek() == '_'))
                 sb.Append(Advance());
-
+ 
             string word     = sb.ToString();
             string combined = word + " " + PeekRestOfLine().TrimStart();
 
@@ -121,7 +121,7 @@ namespace LexorInterpreter.Lexer
         private void ScanSymbol(int tokenLine, int tokenCol)
         {
             char c = Peek();
-
+ 
             if (c == '=')
             {
                 Advance();

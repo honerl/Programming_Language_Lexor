@@ -130,18 +130,27 @@ namespace LexorInterpreter.Interpreter
                 {
                     case "INT":
                         if (value is int)    return value;
-                        if (value is double) return (int)(double)value;
+                        if (value is double)
+                        {
+                            double d = (double)value;
+                            // Reject if it has a fractional part — LEXOR is strongly typed
+                            if (d != Math.Floor(d))
+                                throw new LexorRuntimeException(string.Format(
+                                    "Type error: Cannot assign FLOAT value '{0}' to INT variable '{1}'. Use an integer value.",
+                                    d, varName));
+                            return (int)d;
+                        }
                         if (value is bool)
                             throw new LexorRuntimeException(
-                                string.Format("Cannot assign BOOL to INT variable '{0}'.", varName));
+                                string.Format("Type error: Cannot assign BOOL to INT variable '{0}'.", varName));
                         return Convert.ToInt32(value);
 
                     case "FLOAT":
                         if (value is double) return value;
                         if (value is int)    return (double)(int)value;
                         if (value is bool)
-                            throw new LexorRuntimeException(
-                                string.Format("Cannot assign BOOL to FLOAT variable '{0}'.", varName));
+                            throw new LexorRuntimeException(string.Format(
+                                "Type error: Cannot assign BOOL to FLOAT variable '{0}'.", varName));
                         return Convert.ToDouble(value);
 
                     case "CHAR":
@@ -150,11 +159,14 @@ namespace LexorInterpreter.Interpreter
                         {
                             string s = (string)value;
                             if (s.Length == 1) return s[0];
-                            throw new LexorRuntimeException(
-                                string.Format("Cannot assign string to CHAR variable '{0}': must be a single character.", varName));
+                            throw new LexorRuntimeException(string.Format(
+                                "Type error: Cannot assign string to CHAR variable '{0}': must be a single character.", varName));
                         }
-                        throw new LexorRuntimeException(
-                            string.Format("Cannot assign {0} to CHAR variable '{1}'.", value.GetType().Name, varName));
+                        if (value is int || value is double)
+                            throw new LexorRuntimeException(string.Format(
+                                "Type error: Cannot assign numeric value to CHAR variable '{0}'. Use a char literal like 'a'.", varName));
+                        throw new LexorRuntimeException(string.Format(
+                            "Type error: Cannot assign {0} to CHAR variable '{1}'.", value.GetType().Name, varName));
 
                     case "BOOL":
                         if (value is bool)   return value;
@@ -164,8 +176,11 @@ namespace LexorInterpreter.Interpreter
                             if (s == "TRUE")  return true;
                             if (s == "FALSE") return false;
                         }
-                        throw new LexorRuntimeException(
-                            string.Format("Cannot assign {0} to BOOL variable '{1}'.", value.GetType().Name, varName));
+                        if (value is int || value is double)
+                            throw new LexorRuntimeException(string.Format(
+                                "Type error: Cannot assign numeric value to BOOL variable '{0}'. Use TRUE or FALSE.", varName));
+                        throw new LexorRuntimeException(string.Format(
+                            "Type error: Cannot assign {0} to BOOL variable '{1}'. Use TRUE or FALSE.", value.GetType().Name, varName));
 
                     default:
                         throw new LexorRuntimeException(
